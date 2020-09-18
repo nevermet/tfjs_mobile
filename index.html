@@ -11,45 +11,44 @@
     <canvas></canvas>
     <script>
     video = document.querySelector('video');
-      canvas = document.querySelector('canvas');
-      canvas.width = 48;
-      canvas.height = 48;
-      canvas.style.filter = 'grayscale(1)';
-      video.style.transform = 'scaleX(-1)';
+    canvas = document.querySelector('canvas');
+    button = document.querySelector('button');
 
+    canvas.width = 48;
+    canvas.height = 48;
 
-      span = document.querySelector('span');
-      span.style.fontSize = '48px';
+    canvas.style.filter = 'grayscale(1)';
+    video.style.transform = 'scaleX(-1)';
 
-      const LABELS = {
-        0: '🤬', // angry
-        1: '🤢', // disgust
-        2: '😱', // fear
-        3: '😄', // happy
-        4: '😢', // sad
-        5: '😲', // surprise
-        6: '😐' // neutral
-      }
+    span = document.querySelector('span');
+    span.style.fontSize = '48px';
 
+    const LABELS = {
+      0: '🤬', // angry
+      1: '🤢', // disgust
+      2: '😱', // fear
+      3: '😄', // happy
+      4: '😢', // sad
+      5: '😲', // surprise
+      6: '😐' // neutral
+    }
 
+   async function predict() {
+      const model = await tf.loadLayersModel('./model/model.json');
 
-     async function predict() {
-        const model = await tf.loadLayersModel('./model/model.json');
+      image = tf.browser.fromPixels(canvas);
+      console.log(image);
+      image = image.toFloat().mean(2).mul(1/255.0).reshape([-1, 48, 48, 1]);
+      logits = model.predict(image);
+      const results = await logits.softmax().data();
+      i = results.indexOf(Math.max(...results));
 
-        image = tf.browser.fromPixels(canvas);
-        console.log(image);
-        image = image.toFloat().mean(2).mul(1/255.0).reshape([-1, 48, 48, 1]);
-        logits = model.predict(image);
-        const results = await logits.softmax().data();
-        i = results.indexOf(Math.max(...results));
+      image.dispose();
+      logits.dispose();
+      console.log(results);
 
-        image.dispose();
-        logits.dispose();
-        console.log(results);
-
-        span.innerHTML = LABELS[i];
-      }
-
+      span.innerHTML = LABELS[i];
+    }
 
     button.onclick = function() {
         w = video.videoWidth;
@@ -63,6 +62,16 @@
 
         span.innerHTML = '⌛';
         predict();
+
+'        canvas.width = video.videoWidth;
+'        canvas.height = video.videoHeight;
+'        canvas.getContext('2d').drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            'mobilenet.load().then(model => {
+             '   model.classify(canvas).then(predictions => {
+        'alert(predictions[0].className + ': ' + predictions[0].probability);
+        'console.log(predictions);
+        '        });
+        '    });
     };
 
     constraints = {
@@ -82,4 +91,3 @@
     </script>
   </body>
 </html>
-     
